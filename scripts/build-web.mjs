@@ -51,6 +51,13 @@ await writeFile(path.join(out,'capabilities.json'),JSON.stringify({
   dataRetention:'page-memory-only',commit:process.env.GITHUB_SHA||null
 },null,2)+'\n');
 const entries=[];
-for(const f of (await walk(out)).sort()) entries.push({path:path.relative(out,f).split(path.sep).join('/'),sha256:createHash('sha256').update(await readFile(f)).digest('hex')});
-await writeFile(path.join(out,'build-manifest.json'),JSON.stringify({version:'1.2.1',files:entries},null,2)+'\n');
-console.log(`Static build ready: ${entries.length+1} files. No website has been deployed by this script.`);
+for(const f of (await walk(out)).sort()) {
+  const rel=path.relative(out,f).split(path.sep).join('/');
+  // .nojekyll is a hosting/build marker, not a browser asset. The Pages artifact
+  // action excludes hidden files, and a public GET for this marker can be 404.
+  // Keep every actual HTML/CSS/JS/data asset subject to byte-for-byte verification.
+  if(rel==='.nojekyll')continue;
+  entries.push({path:rel,sha256:createHash('sha256').update(await readFile(f)).digest('hex')});
+}
+await writeFile(path.join(out,'build-manifest.json'),JSON.stringify({version:'1.2.1',buildOnlyFiles:['.nojekyll'],files:entries},null,2)+'\n');
+console.log(`Static build ready: ${entries.length+1} browser assets. No website has been deployed by this script.`);
