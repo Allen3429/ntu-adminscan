@@ -1,0 +1,13 @@
+{
+  "name": "ntu-adminscan",
+  "version": "1.2.1",
+  "private": true,
+  "description": "行政一掃通：本機優先的行政資料草稿工具；非臺大官方服務",
+  "engines": {"node": ">=22"},
+  "scripts": {
+    "build": "node scripts/build-web.mjs",
+    "test": "node scripts/test-web.mjs",
+    "preview": "node scripts/preview.mjs",
+    "start": "node scripts/preview.mjs"
+  }
+}

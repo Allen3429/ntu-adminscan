@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>行政一掃通 · AdminScan</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="topbar"><a class="brand" href="index.html"><span class="brandmark" aria-hidden="true">文</span><span>行政一掃通<small>ADMINSCAN / NTU STUDENT PROTOTYPE</small></span></a><div class="header-right"><span class="badge">本機優先 · 不接付費 API</span><span class="version">製單＋代辦演練</span></div></header>
+<div class="layout">
+<aside class="sidebar"><p class="eyebrow">WORKSPACE</p><nav aria-label="主要功能"><button class="nav active" data-tab="case">01 <span>處理案件</span></button><button class="nav" data-tab="sources">02 <span>規則來源</span></button><button class="nav" data-tab="lab">03 <span>測試與驗證</span></button><button class="nav" data-tab="manual">04 <span>手冊參考</span></button><button class="nav" data-tab="execution">05 <span>製單與代辦</span></button></nav><div class="side-note"><span class="dot"></span><b>不是另一個聊天機器人</b><p>辨識 → 確認 → 找依據 → 排步驟 → 送件前檢查</p><p>沒有把握，就清楚交給真人。</p></div><div class="side-bottom">非臺大官方系統<br>不替你簽名、核准或付款。<br><span id="connection">正在檢查本機服務…</span></div></aside>
+<main>
+<section id="tab-case" class="tab">
+<div class="hero"><div><p class="eyebrow">FROM DOCUMENT TO NEXT STEP</p><h1>讓一張單據，<br>變成<span>可接手的案件。</span></h1><p class="lead">不必先懂校內所有行政流程。放入文件、核對幾個關鍵事實，<br class="desktop">先預檢，再到「05 製單與代辦」準備底稿；正式代送尚待校方串接。</p></div><div class="hero-card"><span>本版處理範圍</span><strong>3 條行政路徑</strong><div>講者費 · 聘僱 · 採購核銷</div><small>每條規則有來源、範圍與覆核日期。<br>「檢查完成」不等於校方核准。</small></div></div>
+<div class="demo-strip"><span>先用合成資料試試</span><button data-demo="lecture">講者費附件齊備 ↗</button><button data-demo="hire">聘僱已開始 ↗</button><button data-demo="purchase">校總區發票 ↗</button></div>
+<div class="workspace-grid">
+<section class="panel input-panel"><div class="panel-head"><span class="step">1</span><h2>放入你的文件</h2><button id="clear" class="text-button">清空案件</button></div>
+<label class="dropzone" id="dropzone" for="file"><span class="scan-icon" aria-hidden="true">＋</span><strong>選擇照片、PDF 或文字檔</strong><span>PNG / JPEG / WEBP / PDF / TXT</span><small>每檔最多 10 MB，PDF 最多 5 頁</small><input id="file" type="file" accept=".png,.jpg,.jpeg,.webp,.pdf,.txt"></label>
+<div id="fileState" class="muted"></div><img id="preview" alt="待辨識文件的本機預覽" hidden>
+<button id="scan" class="secondary full" disabled>辨識文件（本機處理）</button><p class="micro">照片與 PDF 僅交給這台電腦的本機服務。未啟動服務時仍可直接貼文字。請勿輸入完整證號與銀行帳號。</p>
+<label for="caseText" class="field-label">或直接貼上文件內容／描述案件</label><textarea id="caseText" rows="6" maxlength="50000" placeholder="例如：我要報一筆校外講者費，手上有領據與演講海報，經費來自……"></textarea>
+<div class="input-actions"><button id="analyze" class="primary">辨識案件並檢查 <span>→</span></button><button id="mask" class="text-button">遮罩常見個資</button></div><div id="notice" class="notice" role="status" aria-live="polite"></div>
+<details class="advanced"><summary>本機 AI 模型（選用，不使用付費 API）</summary><p>OCR 與規則引擎不需要 LLM。選用本機 Ollama 後，模型可提出欄位候選並呼叫規則查詢工具；不直接核准案件。</p><div class="model-row"><select id="model" aria-label="選擇本機模型"><option value="">尚未載入模型</option></select><button id="models" class="secondary">檢查模型</button></div><button id="prepareAI" class="text-button">準備去識別文字供我檢查</button><textarea id="aiText" rows="4" placeholder="先按上方準備，再自行檢查是否還有個資。" maxlength="12000"></textarea><label class="checkline"><input id="consent" type="checkbox">我已檢查文字，允許交給本機模型；不含第三方雲端。</label><button id="runAI" class="secondary full">執行本機混合 Agent</button><div id="aiResult" class="muted"></div></details>
+</section>
+<div class="output-column">
+<section class="panel"><div class="panel-head"><span class="step">2</span><h2>辨識與事實核對</h2></div><div id="candidate" class="empty"><div class="empty-glyph">↗</div><h3>先辨識，再確認</h3><p>系統不會把「沒有領據」誤當成「已附領據」，<br>也不會把照片中的數字直接當成核准金額。</p></div><div id="sampleFlag" class="sample-flag" hidden>合成示範案件 · 不是已完成的真實報帳</div><div id="questions"></div><details id="answeredWrap" hidden><summary>已確認的條件（可修改）</summary><div id="answered"></div></details></section>
+<section class="panel result-panel" id="resultPanel"><div class="panel-head"><span class="step">3</span><h2>現在怎麼做？</h2><span id="status" class="status neutral">尚未分析</span></div><p id="resultSummary" class="muted">完成案件辨識後，這裡會生成有依據的任務卡。</p><div id="blockers"></div><ol id="tasks" class="tasks"></ol><div id="notes"></div><div id="deadline"></div><div id="evidence" class="evidence"></div><details id="manualHints" hidden><summary>附件手冊的相關操作參考</summary><div id="manualHintsContent"></div></details><details id="traceWrap" hidden><summary>查看執行軌跡</summary><div id="trace"></div></details><details id="handoffWrap" hidden><summary>帶給承辦的案件摘要（未寄出）</summary><textarea id="handoff" rows="7" readonly></textarea><button id="copyHandoff" class="secondary">複製摘要</button></details><div id="exports" class="export-row" hidden><button id="export" class="secondary">匯出去識別任務卡</button><button id="print" class="secondary">列印／另存 PDF</button></div><p class="micro">原件真偽、印章、簽名、實際退件率及完整校內簽核，不在本版自動驗證範圍。</p></section>
+</div></div>
+</section>
+<section id="tab-sources" class="tab" hidden><p class="eyebrow">EVIDENCE, NOT GUESSWORK</p><h1 class="small-title">規則有出處，<br>也有適用邊界。</h1><p class="lead">公開資料已於 2026-09-05 核讀；未經臺大承辦背書。30 日覆核期限是本產品的保守設計，不是校方規定。</p><div class="toolbar"><button id="checkSources" class="primary">檢查官方頁面變更</button><p class="muted">只讀核准的官方網站；不傳案件資料。不會自動覆蓋規則。</p></div><div class="notice">首次建立快照、內容有異動、改址或抓取失敗，都必須人工覆核。網站表格附件未納入比對的部分，不會被宣稱已檢查。</div><div id="sourceRegistry" class="source-grid"></div></section>
+<section id="tab-lab" class="tab" hidden><p class="eyebrow">TEST BEFORE YOU TRUST</p><h1 class="small-title">把不可靠的地方，<br>先測出來。</h1><p class="lead">合成案例測試程式是否按設計運作；不代表真實案件正確率，<br>更不代表已證明減少退件或省下多少時間。</p><div class="stats"><div><span id="testCount">—</span><small>合成回歸案例</small></div><div><span id="testPass">—</span><small>本次程式檢查通過</small></div><div><span id="pilotCount">0</span><small>本頁實際記錄的試用次數</small></div></div><div class="toolbar"><button id="runTests" class="primary">執行合成回歸測試</button><button id="exportTests" class="secondary" disabled>匯出測試結果</button></div><div id="testResults"></div><section class="panel study-panel"><h2>真人試用記錄器</h2><p>這裡不會自動產生受測者或測試數據。請按研究流程實際操作並取得同意；資料只留在本次頁面，離開前自行匯出。</p><div class="study-fields"><label>匿名編號<input id="participant" placeholder="例如 P001" maxlength="12"></label><label>合成案例編號<input id="studyCase" placeholder="例如 L01" maxlength="12"></label><label>操作方式<select id="studyMode"><option value="manual">人工查找</option><option value="assisted">使用 AdminScan</option></select></label><label>文件完整性<select id="studyOutcome"><option value="unreviewed">尚未由評閱者核對</option><option value="complete">評閱者確認完整</option><option value="incomplete">評閱者確認仍缺漏</option></select></label></div><div class="toolbar"><button id="startTrial" class="secondary">開始計時</button><button id="endTrial" class="secondary" disabled>結束並記錄</button><button id="exportTrials" class="secondary">匯出本次試用 CSV</button><span id="trialStatus" class="muted">尚無真人資料。</span></div></section></section>
+<section id="tab-manual" class="tab" hidden>
+<p class="eyebrow">SOURCE-BOUND / READ ONLY / NOT CURRENT-POLICY APPROVAL</p>
+<h1 class="small-title">不只看單據，<br>也找到卡住的那一步。</h1>
+<p class="lead">把你提供的臺大主計室手冊，拆成可查的步驟、問題與頁碼。<br>這一層是關鍵字檢索與固定排查卡，不是模型推論，也不是連線查帳。</p>
+<div class="notice" id="manualVersionNotice"></div>
+<p class="micro">所得稅、勞健保／勞退、採購與財產金額門檻只保留原文參考，不據此自動判斷現行適用性。所有手冊項目均為 reference-only。</p>
+<div class="manual-problems" aria-label="常見問題參考">
+<button class="secondary" data-manual-issue="funding-missing">找不到經費</button><button class="secondary" data-manual-issue="appointment-missing">沒有聘號</button><button class="secondary" data-manual-issue="tracking">不知道卡在哪裡</button><button class="secondary" data-manual-issue="allocation">多筆經費分攤</button>
+</div>
+<div id="allocationFields" class="panel" hidden><label for="fundingCount" class="field-label">已確認的分攤經費筆數（不是受款人數）</label><input id="fundingCount" type="number" min="1" max="50" step="1" placeholder="尚未確認就留空"><p class="micro">份數僅依這份手冊示範；不是確認現行必印份數。</p></div>
+<div id="manualDiagnosis" class="panel" hidden aria-live="polite"></div>
+<div class="manual-search-row"><label>搜尋手冊關鍵字<input id="manualSearch" maxlength="200" placeholder="例如：聘號、分攤、進度、校區、時薪"></label><label>依原手冊章節<select id="manualChapter"></select></label><button id="clearManual" class="secondary">重設參考</button></div>
+<div class="toolbar"><span id="manualCount" class="muted"></span><button id="exportManual" class="secondary">匯出本次參考項目</button></div>
+<div id="manualCards" class="source-grid"></div>
+</section>
+<section id="tab-execution" class="tab" hidden>
+<div class="ex-top"><div><p class="eyebrow">FROM GUIDANCE TO DELEGATION</p><h1 class="small-title">你交單據，<br>流程接著走。</h1><p class="lead">從「告訴你怎麼辦」改成「替你把案子備好」。<br>正式送簽與原件服務需校方合作；這一版先完成製單底稿與分工演練。</p></div><div class="ex-capability"><b>正式代送：尚未接通</b><p>製單底稿可用 · 校內送件 0 件<br>真實核准 0 件 · 真實付款 0 件</p><small>不是臺大官方服務，無人正在後台接手。</small></div></div>
+<div class="toolbar"><button id="execImport" class="primary">帶入剛掃描的案件</button><button id="execDemo" class="secondary">載入「不跑楼」合成演練</button><button id="execReset" class="text-button">清除工作台</button></div>
+<div class="notice">正式目標：掃描 → 核對必要資訊 → 一次授權 → 系統製單送簽、處理補件 → 通知結果。主管仍自行核准；原件由合作窗口接手。下面的一級／二級主管僅為演練配置，不是全校通用路徑。</div>
+<div class="ex-grid">
+<div class="panel"><div class="panel-head"><h2>01 製單資料</h2><span class="badge" id="execRev">R1</span></div><p class="micro">本次不保存個人常用設定，不要求銀行帳號、完整證號或校務密碼。正式版的單位、經費與路徑應由承辦預先設定，使用者不需逐案背規則。</p>
+<div class="ex-fields"><label>案件入口<select id="ex_lane"><option value="purchase">採購／核銷</option><option value="lecture">講者／人事費</option><option value="hire">聘僱／勞健保</option></select></label><label>申請人代稱<input id="ex_applicant" maxlength="80" placeholder="測試先用代稱"></label>
+<label>文件日期<input id="ex_documentDate" type="date"></label><label>文件金額<input id="ex_amount" inputmode="decimal" maxlength="20"></label>
+<label>文件／發票號碼<input id="ex_documentNo" maxlength="60" placeholder="未知可留空，切勿編造"></label><label>受款人代稱<input id="ex_payee" maxlength="80" placeholder="帳號由正式系統授權資料帶入"></label>
+<label class="wide">真實支出用途<textarea id="ex_purpose" rows="2" maxlength="1000" placeholder="不能由發票品名推定活動或編造目的"></textarea></label>
+<label>經費所屬一級單位<input id="ex_unit1" maxlength="100"></label><label>經費所屬二級單位<input id="ex_unit2" maxlength="100"></label>
+<label class="wide">經費代碼<input id="ex_fundCode" maxlength="80" placeholder="僅帶入本人獲授權使用的經費"></label>
+<label>原件處理方式<select id="ex_originalMode"><option value="">尚未確認</option><option value="unknown">需承辦判斷</option><option value="paper">需紙本原件交接</option><option value="digital">承辦確認可採電子憑證（本版未驗證）</option></select></label><label>合作交接窗口<input id="ex_servicePoint" maxlength="150" placeholder="需有實際合作，不是要求使用者跑樓"></label>
+</div>
+<div id="execMissing"></div><label class="checkline"><input type="checkbox" id="ex_confirm">我已核對本版金額、經費、用途及受款資料；知道這是工作底稿，不是校方簽章或核准。</label>
+<button id="execPrepare" class="primary full">產生製單工作底稿</button><div id="execNotice" class="notice" role="status" aria-live="polite"></div>
+</div>
+<div class="output-column">
+<section class="panel"><div class="panel-head"><h2>02 底稿與接手</h2><span id="execStatus" class="badge"></span></div><p class="micro" id="execEnv"></p><p class="micro" id="execSummary"></p><div id="execDocumentPreview"></div><div class="export-row"><button id="execExportHTML" class="secondary" disabled>匯出製單底稿 HTML</button><button id="execExportJSON" class="secondary" disabled>匯出待串接資料 JSON</button></div><button id="execCheckLive" class="secondary full">檢查正式代送條件（不送出）</button><p class="micro">輸出的底稿不是官方黏存單，沒有官方單號與條碼；原始文件未嵌入。正式轉製需官方範本與欄位對照。</p></section>
+<section class="panel"><h2>03 誰接著處理？</h2><p class="micro">資料不等於授權。收到某個角色的可信回覆才可繼續，不能用畫面上的勾勾冒充蓋章。</p><div id="execTasks"></div><p id="execOriginalStatus" class="notice"></p>
+<div id="execDemoControls" hidden><div class="sample-flag">僅演練：以下按鈕不會通知任何主管、單位或出納。</div><button id="execStartDemo" class="secondary full">開始合成送簽演練</button><p id="execNext"></p><div class="ex-demo-buttons"><button id="execOriginal" class="secondary">演練：窗口接收原件</button><button id="execAdvance" class="secondary">演練：下一站回覆</button><button id="execReturn" class="text-button">演練：退回補件</button></div></div>
+<details><summary>本機版本與事件紀錄（不是有效簽核證據）</summary><div id="execAudit"></div></details></section>
+</div></div>
+<section class="panel ex-bridge"><h2>不是另造簽章平台，而是接上既有能力</h2><p>下列公開資料證明校內已有部分電子流程，不代表本產品已取得串接權限，也不代表每一種報帳均已無紙化。公開核讀：2026-09-06。</p><div class="ex-source-grid"><article><h3>電子表單／順會並會</h3><p>2021 年官方介紹載明單一簽入、線上簽核與流程設定；仍排除限定紙本核章的情況。</p><a href="https://www.cc.ntu.edu.tw/chinese/spotlight/2021/a109030.asp" target="_blank" rel="noopener noreferrer">官方介紹 ↗</a></article><article><h3>特定經費流用已有電子路徑</h3><p>聯合辦公室頁面列出 L7、L8、L9、L104 經費流用的主管、會辦、決行與後會流程；不是一般發票核銷路徑。</p><a href="https://jpoas.ntu.edu.tw/form.html" target="_blank" rel="noopener noreferrer">範圍與流程 ↗</a></article><article><h3>跨系統資料匯入已有先例</h3><p>2025 年差旅費公告載明以報告編號、授權碼匯入並產單；不表示已開放給本工具使用，也不是通用報帳 API。</p><a href="https://www.cc.ntu.edu.tw/chinese/spotlight/2025/a114022.asp" target="_blank" rel="noopener noreferrer">官方公告 ↗</a></article></div></section>
+</section>
+<footer>AdminScan · 學生開發工具 · v1.1-execution-alpha.1 <span>不保存校務密碼 · 正式代送未接通 · 不代簽或付款</span></footer>
+</main></div>
+<script src="js/data.js"></script><script src="js/engine.js"></script><script src="js/benchmarks.js"></script><script src="js/manual-data.js"></script><script src="js/manual-reference.js"></script><script src="js/app.js"></script><script src="js/manual-ui.js"></script><script src="js/execution-engine.js"></script><script src="js/execution-ui.js"></script>
+</body></html>

@@ -1,0 +1,14 @@
+dist/
+reports/
+node_modules/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+.vercel/
+.venv/
+runtime/
+uploads/
+private/
+.DS_Store
